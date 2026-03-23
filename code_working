@@ -1,0 +1,52 @@
+#include <Joystick.h>
+01 07 08 43 49 50 60 62 75 88 90 92 95 96
+// Configuração do Joystick
+Joystick_ Joystick(
+  JOYSTICK_DEFAULT_REPORT_ID,
+  JOYSTICK_TYPE_GAMEPAD,
+  10,  // Número de botões
+  0,   // Sem eixos
+  false, false, false, false, false, false,
+  false, false, false, false, false
+);
+
+const int buttonPins[] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 16}; // Pinos dos botões
+const int numButtons = 10;
+
+// Variáveis para debounce
+int lastButtonState[10] = {HIGH}; // HIGH = não pressionado (PULLUP)
+unsigned long lastDebounceTime[10] = {0};
+const unsigned long debounceDelay = 50; // ms
+
+void setup() {
+  for (int i = 0; i < numButtons; i++) {
+    pinMode(buttonPins[i], INPUT_PULLUP);
+  }
+  Joystick.begin();
+  Serial.begin(9600); // Opcional para debug
+}
+
+void loop() {
+  for (int i = 0; i < numButtons; i++) {
+    int currentReading = !digitalRead(buttonPins[i]); // Inverte por causa do PULLUP
+    
+    // Debounce
+    if (currentReading != lastButtonState[i]) {
+      lastDebounceTime[i] = millis();
+    }
+    
+    if ((millis() - lastDebounceTime[i]) > debounceDelay) {
+      // Envia o estado atual diretamente (sem verificação prévia)
+      Joystick.setButton(i, currentReading);
+      
+      // Debug (opcional)
+      Serial.print("Btn ");
+      Serial.print(i);
+      Serial.print(": ");
+      Serial.println(currentReading);
+    }
+    
+    lastButtonState[i] = currentReading;
+  }
+  delay(10);
+}
